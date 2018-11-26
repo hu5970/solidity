@@ -34,8 +34,9 @@ struct Exception; // forward
 
 namespace langutil
 {
+
 struct SourceLocation;
-class Scanner;
+struct SourceReference;
 
 class SourceReferenceFormatter
 {
@@ -63,9 +64,6 @@ public:
 	}
 
 private:
-	/// Prints source name if location is given.
-	void printSourceName(SourceReference const& _ref);
-
 	std::ostream& m_stream;
 };
 
