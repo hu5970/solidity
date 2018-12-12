@@ -47,7 +47,11 @@ class VariableUsage;
 class SMTChecker: private ASTConstVisitor
 {
 public:
-	SMTChecker(langutil::ErrorReporter& _errorReporter, std::map<h256, std::string> const& _smtlib2Responses);
+	SMTChecker(
+		langutil::ErrorReporter& _errorReporter,
+		std::map<h256, std::string> const& _smtlib2Responses,
+		ReadCallback::Callback _smtSolver
+	);
 
 	void analyze(SourceUnit const& _sources, std::shared_ptr<langutil::Scanner> const& _scanner);
 
