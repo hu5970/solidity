@@ -41,33 +41,29 @@ else
     branch=$1
 fi
 
-if [ "$branch" = develop ]
-then
-    pparepo=ethereum-dev
-    ppafilesurl=https://launchpad.net/~ethereum/+archive/ubuntu/ethereum-dev/+files
-else
-    pparepo=ethereum
-    ppafilesurl=https://launchpad.net/~ethereum/+archive/ubuntu/ethereum/+files
-fi
-
-keyid=70D110489D66E2F6
-email=builds@ethereum.org
+keyid=E80FD058F7C6DF61
+email=daniel@ekpyron.org
 packagename=solc
 
-for distribution in trusty xenial bionic cosmic
+for distribution in bionic cosmic static
 do
 cd /tmp/
 rm -rf $distribution
 mkdir $distribution
 cd $distribution
 
-# Dependency
-if [ $distribution = trusty -o $distribution = vivid ]
+if [ $distribution = static ]
 then
-    Z3DEPENDENCY=""
+    ppafilesurl=https://launchpad.net/~ekpyron/+archive/ubuntu/ethereum-experimental-static/+files
+    pparepo=ethereum-experimental-static
+	Z3DEPENDENCY=""
+    CMAKE_OPTIONS="-DSOLC_LINK_STATIC=On"
 else
+    ppafilesurl=https://launchpad.net/~ekpyron/+archive/ubuntu/ethereum-experimental/+files
+    pparepo=ethereum-experimental
     Z3DEPENDENCY="libz3-dev,
                "
+    CMAKE_OPTIONS=""
 fi
 
 # Fetch source
@@ -111,10 +107,10 @@ cat <<EOF > debian/control
 Source: solc
 Section: science
 Priority: extra
-Maintainer: Christian (Buildserver key) <builds@ethereum.org>
+Maintainer: Daniel Kirchner <daniel@ekpyron.org>
 Build-Depends: ${Z3DEPENDENCY}debhelper (>= 9.0.0),
                cmake,
-               g++-8,
+               g++,
                git,
                libgmp-dev,
                libboost-all-dev,
@@ -168,7 +164,7 @@ override_dh_shlibdeps:
 	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
 
 override_dh_auto_configure:
-	dh_auto_configure -- -DINSTALL_LLLC=Off -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8
+	dh_auto_configure -- -DINSTALL_LLLC=Off -DTESTS=OFF ${CMAKE_OPTIONS}
 EOF
 cat <<EOF > debian/copyright
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
@@ -205,14 +201,14 @@ solc (0.0.1-0ubuntu1) saucy; urgency=low
 
   * Initial release.
 
- -- Christian <build@ethereum.org>  Mon, 03 Feb 2016 14:50:20 +0000
+ -- Daniel Kirchner <daniel@ekpyron.org>  Wed, 12 Dec 2018 04:00:20 +0000
 EOF
 echo docs > debian/docs
 mkdir debian/source
 echo "3.0 (quilt)" > debian/source/format
 chmod +x debian/rules
 
-versionsuffix=0ubuntu1~${distribution}
+versionsuffix=0ubuntu8~${distribution}
 # bump version / add entry to changelog
 EMAIL="$email" dch -v 1:${debversion}-${versionsuffix} "git build of ${commithash}"
 
@@ -224,7 +220,12 @@ EMAIL="$email" dch -v 1:${debversion}-${versionsuffix} "git build of ${commithas
 debuild -S -d -sa -us -uc
 
 # prepare .changes file for Launchpad
-sed -i -e s/UNRELEASED/${distribution}/ -e s/urgency=medium/urgency=low/ ../*.changes
+if [ $distribution = static ]
+then
+    sed -i -e s/UNRELEASED/cosmic/ -e s/urgency=medium/urgency=low/ ../*.changes
+else
+    sed -i -e s/UNRELEASED/${distribution}/ -e s/urgency=medium/urgency=low/ ../*.changes
+fi
 
 # check if ubuntu already has the source tarball
 (
