@@ -85,6 +85,11 @@ public:
 		return nullptr;
 	}
 
+	/// Adds the size of _funCall to the size of _callSite. This is just
+	/// a rough estimate that is done during inlining. The proper size
+	/// should be determined after inlining is completed.
+	void tentativelyUpdateCodeSize(YulString _function, YulString _callSite);
+
 private:
 	void updateCodeSize(FunctionDefinition& fun);
 	void handleBlock(YulString _currentFunctionName, Block& _block);
